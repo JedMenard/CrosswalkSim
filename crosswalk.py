@@ -55,15 +55,15 @@ def main(N, randomAuto, randomPed, randomButtons):
     pedTimes = getTimes(randomPed)
     buttonTimes = getTimes(randomButtons)
 
-    if len(pedTimes < N * 5):
+    if len(pedTimes) < N * 5:
         print "Trace file too short."
         sys.exit(1)
     
-    if len(autoTimes < N * 5):
+    if len(autoTimes) < N * 5:
         print "Trace file too short."
         sys.exit(1)
         
-    if len(buttonTimes < N * 5):
+    if len(buttonTimes) < N * 5:
         print "Trace file too short."
         sys.exit(1)
 
