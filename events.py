@@ -1,4 +1,14 @@
-from crosswalk import getTime
+import sys
+
+# Returns a single time from the trace.
+# All *Times.pop() calls are now getTime(*Times)
+def getTime(filereader):
+    try:
+        time = float(filereader.readline().strip())
+        return time
+    except ValueError:
+        print "ValueError in file {}: unexpected end of file".format(filereader.name)
+        sys.exit(1)
 
 def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, uniformToExponential):
     # A pedestrian is spawned in the system (a block away from the crosswalk)
@@ -10,7 +20,7 @@ def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, unifo
 
     # Create an event for the pedestrian's arrival at the crosswalk
     nextArrivalTime = time + distance/speed
-    nextArrival = (nextArrivalTime, 'pedArrival')
+    nextArrival = (nextArrivalTime, 'pedArrival', ped)
     eventList.put(nextArrival)
     print "Event added: pedArrival at {}".format(nextArrivalTime)
 
@@ -22,12 +32,13 @@ def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, unifo
 
     return pedsInSystem, pedTimes
 
-def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChange, buttonTimes):
+def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLightChange, buttonTimes):
     # A pedestrian arrives at the crosswalk
 
-    # Get the pedestrian at the front of the queue (the one who's been walking longest)
-    # TODO: This could be a minor bug, since it's possible one ped passed another on the way to the intersection
-    ped = pedsInSystem.pop(0)
+    # Remove the arriving pedestrian from the system
+    index = pedsInSystem.index(ped)
+    ped = pedsInSystem.pop(index)
+    print ped
 
     # If the cross sign is green upon arrival
     if light == 'green':
@@ -41,9 +52,7 @@ def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChang
             eventList.put(exitEvent)
             print "Event added: pedExit at {}".format(exitTime)
         else:                                           # If the ped cannot cross in time
-            pedsWaiting.append(ped)                     # Create and enqueue the event for the pedestrian getting impatient
-            eventList.put((time+60, 'pedImpatient'))
-            print "Event added: pedImpatient at {}".format(time+60)
+            pedsWaiting.append(ped)
     else:
         r = getTime(buttonTimes)       # If the cross sign is not green,
         n = len(pedsWaiting)        # determine if the ped will push the button
@@ -170,9 +179,17 @@ def startWalk(time, pedsWaiting, eventList):
     return pedsWaiting, eventList
 
 def endWalk(time, pedsWaiting, eventList, buttonTimes):
+    # Any remaining pedestrians will get impatient in one minute
+    if pedsWaiting:
+            eventList.put((time+60, 'pedImpatient'))
+            print "Event added: pedImpatient at {}".format(time+60)
+            print "Target random number: {}".format(15/16)
+
     # Each remaining pedestrian needs to push the button with probability 15/16
+
     for ped in pedsWaiting:
         r = getTime(buttonTimes)
+        print "Random number generated: {}".format(r)
         if r < (15./16):
             eventList.put((time, 'buttonPress'))
             print "Event added: buttonPress at {}".format(time)

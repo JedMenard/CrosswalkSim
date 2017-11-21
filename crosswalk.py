@@ -54,7 +54,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     # If you want detailed outputs to the screen, set this to true
     # Note that it pauses after each event, so leave false when running grader script
     # Press enter to continue through pause
-    debug = False
+    debug = True
 
     # Create file readers for uniform distributions
     autoTimes = initializeReader(randomAuto)
@@ -202,8 +202,10 @@ def processEvent(event, N):
         pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, pedTimes, rp, uniformToExponential)
         
     elif (e == 'pedArrival'):
+        ped = event[2]
         pedsInSystem, pedsWaiting, eventList, buttonTimes = \
-                      pedArrival(time, eventList, pedsInSystem, pedsWaiting, walkLight, lastLightChange, buttonTimes)
+                      pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, \
+                      walkLight, lastLightChange, buttonTimes)
         
     elif (e == 'pedExit'):
         ped = event[2]
