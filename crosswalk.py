@@ -39,6 +39,8 @@ L = 9       # Length of an automobile
             # vk: ped speek, uniform(2.6, 4.1) ft/s
 
 def main(N, randomAuto, randomPed, randomButtons):
+    N = int(N)
+    
     global time
     global eventList
     global autoTimes
