@@ -46,6 +46,8 @@ def main(N, randomAuto, randomPed, randomButtons):
     global buttonTimes
     global spawnCount
 
+    debug = False
+
     # Create arrays of uniform distributions
     autoTimes = getTimes(randomAuto)
     pedTimes = getTimes(randomPed)
@@ -76,31 +78,35 @@ def main(N, randomAuto, randomPed, randomButtons):
     while (spawnCount < N):
         event = eventList.get()
         time = event[0]
-        print "~~~~~~~~~~Next event~~~~~~~~~~"
-        print "Event type: {}".format(event[1])
-        print "Events to date: {}".format(eventCounter)
-        print "Spawns to date: {}".format(spawnCount)
-        print "Time: {}".format(event[0])
-        print "Last crosswalk started at: {}".format(lastStartWalk)
-        print "Last light change at: {}".format(lastLightChange)
-        print "Stoplight color: {}".format(driveLight)
-        print "Crosswalk color: {}".format(walkLight)
-        print "Button pressed: {}".format(buttonPressed)
-        print "Number of pedestrains in system: {}".format(len(pedsInSystem))
-        print "Number of pedestrains waiting: {}".format(len(pedsWaiting))
-        print "Number of pedestrains crossed: {}".format(len(pedDelays))
-        print "Number of automobiles in system: {}".format(len(autosInSystem))
-        print "Number of automobiles waiting: {}".format(len(autosWaiting))
-        print "Number of automobiles crossed: {}".format(len(autoDelays))
+        if debug:
+            print "~~~~~~~~~~Next event~~~~~~~~~~"
+            print "Event type: {}".format(event[1])
+            print "Events to date: {}".format(eventCounter)
+            print "Spawns to date: {}".format(spawnCount)
+            print "Time: {}".format(event[0])
+            print "Last crosswalk started at: {}".format(lastStartWalk)
+            print "Last light change at: {}".format(lastLightChange)
+            print "Stoplight color: {}".format(driveLight)
+            print "Crosswalk color: {}".format(walkLight)
+            print "Button pressed: {}".format(buttonPressed)
+            print "Number of pedestrains in system: {}".format(len(pedsInSystem))
+            print "Number of pedestrains waiting: {}".format(len(pedsWaiting))
+            print "Number of pedestrains crossed: {}".format(len(pedDelays))
+            print "Number of automobiles in system: {}".format(len(autosInSystem))
+            print "Number of automobiles waiting: {}".format(len(autosWaiting))
+            print "Number of automobiles crossed: {}".format(len(autoDelays))
+
+            
         
         processEvent(event, N)
         eventCounter += 1
-        print
-        #raw_input()
+        if debug:
+            print
+            raw_input()
 
         if (eventList.empty()):
             break
-
+    
     print "OUTPUT {} {} {}".format(0,0, np.mean(pedDelays))
 
 
@@ -141,6 +147,7 @@ def processEvent(event, N):
     if (e == 'pedSpawn'):
         spawnCount += 1
         speed = pedTimes.pop()*(4.1-2.6) + 2.6
+        print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
         pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, pedTimes, rp, uniformToExponential)
         
     elif (e == 'pedArrival'):
@@ -258,4 +265,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(20, 'uniform-0-1-00.dat', 'uniform-0-1-01.dat', 'uniform-0-1-02.dat')
+    main(200, 'uniform-0-1-00.dat', 'uniform-0-1-03.dat', 'uniform-0-1-02.dat')

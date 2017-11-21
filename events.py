@@ -21,6 +21,9 @@ def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChang
     ped = pedsInSystem.pop(0)
     if light == 'green':
         crosstime = 46/ped[1]
+        print "Pedestrian speed: {}".format(ped[1])
+        print "Cross time: {}".format(crosstime)
+        print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange)
         if crosstime < 18 - (time - lastLightChange):
             exitTime = time + crosstime
             exitEvent = (exitTime, 'pedExit', ped)
@@ -31,9 +34,10 @@ def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChang
             eventList.put((time+60, 'pedImpatient'))
             print "Event added: pedImpatient at {}".format(time+60)
     else:
-        pedsWaiting.append(ped)
         r = buttonTimes.pop()
         n = len(pedsWaiting)
+        print "Random number generated: {}".format(r)
+        print "Target random number: {}".format(15./16 if n == 0 else 1./(n+1))
         if (n == 0 and r < (15./16)):
             eventList.put((time, 'buttonPress'))
             print "Event added: buttonPress at {}".format(time)
@@ -43,6 +47,7 @@ def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChang
         else:
             eventList.put((time+60, 'pedImpatient'))
             print "Event added: pedImpatient at {}".format(time+60)
+        pedsWaiting.append(ped)
         
     return pedsInSystem, pedsWaiting, eventList, buttonTimes
 
