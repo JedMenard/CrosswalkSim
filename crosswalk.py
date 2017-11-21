@@ -1,5 +1,5 @@
 from events import *
-import queue as Q
+import Queue as Q
 import math
 
 
@@ -61,8 +61,11 @@ def main(N, randomAuto, randomPed, randomButtons):
                 # vj: auto speed, Uniform(25,35) mph
                 # a: auto acceleration, 10 ft/s/s
                 # vk: ped speek, uniform(2.6, 4.1) ft/s
-    
+    time = 0.   # Global system time
 
+    pedDelays = []
+    autoDelays = []
+    
     # Create arrays of uniform distributions
     autoTimes = getTimes(randomAuto)
     pedTimes = getTimes(randomPed)
@@ -70,4 +73,93 @@ def main(N, randomAuto, randomPed, randomButtons):
 
     # Define system state variables
     light = 'g'
-    eventList = Q.PriorityQueue     # eventList is now a priority queue
+    eventList = Q.PriorityQueue()     # eventList is now a priority queue
+    eventCounter = 0;
+
+    nextPedTime = time + uniformToExponential(pedTimes.pop(), rp)
+    nextAutoTime = time + uniformToExponential(autoTimes.pop(), ra)
+    nextLightChange = time
+    nextButtonPress = time
+
+    nextPed = (nextPedTime, 'pedArrival')
+    nextAuto = (nextAutoTime, 'autoArrival')
+    nextLight = (nextLightChange, 'greenExpires')
+    nextButton = (nextButtonPress, 'buttonPress')
+
+    eventList.put(nextPed)
+    eventList.put(nextAuto)
+    eventList.put(nextLight)
+    eventList.put(nextButton)
+
+    while (not eventList.empty()):
+        e = eventList.get()
+        print e
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+if __name__ == '__main__':
+    main(100, '../uniform-0-1-00.dat', '../uniform-0-1-01.dat', '../uniform-0-1-02.dat')
