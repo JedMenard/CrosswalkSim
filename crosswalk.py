@@ -2,6 +2,17 @@ from events import *
 import Queue as Q
 import math
 
+# Defining some global variables
+# This is to prevent function calls with a million parameters and return values
+pedDelays = []
+autoDelays = []
+pedsInSystem = []       # Needs to be treated as a queue, but also needs to have indexed-based access
+autosInSystem = []      # See above comment
+autoTimes = []
+pedTimes = []
+buttonTimes = []
+eventList = Q.PriorityQueue()
+time = 0.   # Global system time
 
 def uniformToExponential(u, l):     # u is uniform, l is associated lambda
     e = -math.log(u)/l              # called l because lambda is reseved in python
@@ -14,7 +25,7 @@ def getTimes(filename):
             times.append(float(line.strip()))
     return times
 
-def processEvent(e, el, pd, ad):    # event, eventList, pedDelays, autoDelays
+def processEvent(e):
     # This is going to be where the bulk of the work is contained.
     # I'm thinking we have this check what type of event e is
     # and call the associated function for proccessing that
@@ -46,7 +57,7 @@ def processEvent(e, el, pd, ad):    # event, eventList, pedDelays, autoDelays
         startWalk()
     elif (e == 'endWalk'):
         endWalk()
-    return el, pd, ad
+    return
 
 def main(N, randomAuto, randomPed, randomButtons):
     B = 330     # Width of a residential block
@@ -61,11 +72,7 @@ def main(N, randomAuto, randomPed, randomButtons):
                 # vj: auto speed, Uniform(25,35) mph
                 # a: auto acceleration, 10 ft/s/s
                 # vk: ped speek, uniform(2.6, 4.1) ft/s
-    time = 0.   # Global system time
 
-    pedDelays = []
-    autoDelays = []
-    
     # Create arrays of uniform distributions
     autoTimes = getTimes(randomAuto)
     pedTimes = getTimes(randomPed)
@@ -73,28 +80,36 @@ def main(N, randomAuto, randomPed, randomButtons):
 
     # Define system state variables
     light = 'g'
-    eventList = Q.PriorityQueue()     # eventList is now a priority queue
     eventCounter = 0;
 
+    # Define initial event times
     nextPedTime = time + uniformToExponential(pedTimes.pop(), rp)
     nextAutoTime = time + uniformToExponential(autoTimes.pop(), ra)
     nextLightChange = time
     nextButtonPress = time
 
+    # Define initial events
     nextPed = (nextPedTime, 'pedArrival')
     nextAuto = (nextAutoTime, 'autoArrival')
     nextLight = (nextLightChange, 'greenExpires')
     nextButton = (nextButtonPress, 'buttonPress')
 
-    eventList.put(nextPed)
-    eventList.put(nextAuto)
+    # Enqueue initial events
+    # TODO: Uncomment when it's time to work on peds
+    #eventList.put(nextPed)
+    # TODO: Uncomment when it's time to work on autos
+    #eventList.put(nextAuto)
     eventList.put(nextLight)
-    eventList.put(nextButton)
+    # TODO: Unocmment when it's time to work on autos
+    #eventList.put(nextButton)
 
     while (eventCounter < N):
-        e = eventCounter.get()
-        eventList, pedDelays, autoDelays = processEvent(e, eventList, pedDelays, autoDelays)
-        eventCounter += N
+        e = eventList.get()
+        print e
+        processEvent(e)
+        eventCounter += 1
+        raw_input()
+        break
 
 
 
