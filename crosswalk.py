@@ -1,6 +1,6 @@
 from events import *
 import Queue as Q
-import math
+import math, numpy as np
 import sys
 
 # Defining some global system variables
@@ -96,10 +96,12 @@ def main(N, randomAuto, randomPed, randomButtons):
         processEvent(event, N)
         eventCounter += 1
         print
-        raw_input()
+        #raw_input()
 
         if (eventList.empty()):
             break
+
+    print "OUTPUT {} {} {}".format(0,0, np.mean(pedDelays))
 
 
 
