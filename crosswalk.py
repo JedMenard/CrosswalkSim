@@ -56,30 +56,31 @@ def main(N, randomAuto, randomPed, randomButtons):
     # Press enter to continue through pause
     debug = False
 
-    # Create arrays of uniform distributions
-    autoTimes = getTimes(randomAuto)
-    pedTimes = getTimes(randomPed)
-    buttonTimes = getTimes(randomButtons)
-
-    # Make sure the data isn't too short (one of the assignment requirements)
-    if len(pedTimes) < N * 5:
-        print "Trace file too short."
-        sys.exit(1)
+    # Create file readers for uniform distributions
+    autoTimes = initializeReader(randomAuto)
+    pedTimes = initializeReader(randomPed)
+    buttonTimes = initializeReader(randomButtons)
     
-    if len(autoTimes) < N * 5:
-        print "Trace file too short."
-        sys.exit(1)
-        
-    if len(buttonTimes) < N * 5:
-        print "Trace file too short."
-        sys.exit(1)
+    # # File truncation is now handled in getTime function
+    # Make sure the data isn't too short (one of the assignment requirements)
+    #if len(pedTimes) < N * 5:
+    #    print "Trace file too short."
+    #    sys.exit(1)
+    #
+    #if len(autoTimes) < N * 5:
+    #    print "Trace file too short."
+    #    sys.exit(1)
+    #    
+    #if len(buttonTimes) < N * 5:
+    #    print "Trace file too short."
+    #    sys.exit(1)
 
     # Define system state variables
     eventCounter = 0;
 
     # Define initial event times
-    nextPedTime = time + uniformToExponential(pedTimes.pop(), rp)
-    nextAutoTime = time + uniformToExponential(autoTimes.pop(), ra)
+    nextPedTime = time + uniformToExponential(getTime(pedTimes), rp)
+    nextAutoTime = time + uniformToExponential(getTime(autoTimes), ra)
     nextLightChange = time
     nextButtonPress = time
 
@@ -142,17 +143,39 @@ def uniformToExponential(u, l):     # u is uniform, l is associated lambda
     e = -math.log(u)/l              # called l because lambda is reseved in python
     return e
 
-def getTimes(filename):             # Loads data from files into array
+# # This has now been split into initializeReader
+# def getTimes(filename):             # Loads data from files into array
+#    try:
+#        times = []
+#        with open(filename, 'r') as f:
+#            for line in f.readlines():
+#                times.append(float(line.strip()))
+#        print "Successfully opened {}".format(filename)
+#        return times
+#    except IOError:
+#        print "Error opening file {}: no such file or directory".format(filename)
+#        sys.exit(1)
+
+# Open file reader with given filename. Nonzero exit if IOError occurs.
+def initializeReader(filename):
     try:
-        times = []
-        with open(filename, 'r') as f:
-            for line in f.readlines():
-                times.append(float(line.strip()))
+        reader = open(filename, 'r')
         print "Successfully opened {}".format(filename)
-        return times
+        return reader
     except IOError:
         print "Error opening file {}: no such file or directory".format(filename)
         sys.exit(1)
+
+# Returns a single time from the trace.
+# All *Times.pop() calls are now getTime(*Times)
+def getTime(filereader):
+    try:
+        time = float(filereader.readline().strip())
+        return time
+    except ValueError:
+        print "ValueError in file {}: unexpected end of file".format(filereader.name)
+        sys.exit(1)
+
 
 def processEvent(event, N):
     # This is going to be where the bulk of the work is contained.
@@ -174,7 +197,7 @@ def processEvent(event, N):
     
     if (e == 'pedSpawn'):
         spawnCount += 1
-        speed = pedTimes.pop()*(4.1-2.6) + 2.6
+        speed = getTime(pedTimes)*(4.1-2.6) + 2.6
         print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
         pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, pedTimes, rp, uniformToExponential)
         

@@ -1,3 +1,5 @@
+from crosswalk import getTime
+
 def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, uniformToExponential):
     # A pedestrian is spawned in the system (a block away from the crosswalk)
     # Pedestrians are tracked as tupes of the form (spawn_time, speed)
@@ -13,7 +15,7 @@ def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, unifo
     print "Event added: pedArrival at {}".format(nextArrivalTime)
 
     # Create an event for the next pedestrian to be spawned
-    nextSpawnTime = time + uniformToExponential(pedTimes.pop(), rp)
+    nextSpawnTime = time + uniformToExponential(getTime(pedTimes), rp)
     nextSpawn = (nextSpawnTime, 'pedSpawn')
     eventList.put(nextSpawn)
     print "Event added: pedSpawn at {}".format(nextSpawnTime)
@@ -43,7 +45,7 @@ def pedArrival(time, eventList, pedsInSystem, pedsWaiting, light, lastLightChang
             eventList.put((time+60, 'pedImpatient'))
             print "Event added: pedImpatient at {}".format(time+60)
     else:
-        r = buttonTimes.pop()       # If the cross sign is not green,
+        r = getTime(buttonTimes)       # If the cross sign is not green,
         n = len(pedsWaiting)        # determine if the ped will push the button
         print "Random number generated: {}".format(r)
         print "Target random number: {}".format(15./16 if n == 0 else 1./(n+1))
@@ -170,7 +172,7 @@ def startWalk(time, pedsWaiting, eventList):
 def endWalk(time, pedsWaiting, eventList, buttonTimes):
     # Each remaining pedestrian needs to push the button with probability 15/16
     for ped in pedsWaiting:
-        r = buttonTimes.pop()
+        r = getTime(buttonTimes)
         if r < (15./16):
             eventList.put((time, 'buttonPress'))
             print "Event added: buttonPress at {}".format(time)
