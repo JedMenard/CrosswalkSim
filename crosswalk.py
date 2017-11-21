@@ -91,7 +91,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventList.put(nextLight)
     eventList.put(nextButton)
 
-    while (eventCounter > N):
+    while (eventCounter < N):
         e = eventCounter.get()
         eventList, pedDelays, autoDelays = processEvent(e, eventList, pedDelays, autoDelays)
         eventCounter += N
