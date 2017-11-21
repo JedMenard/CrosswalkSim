@@ -55,6 +55,11 @@ def main(N, randomAuto, randomPed, randomButtons):
     pedTimes = getTimes(randomPed)
     buttonTimes = getTimes(randomButtons)
 
+    print len(autoTimes)
+    print len(pedTimes)
+    print len(buttonTimes)
+    
+
     # Define system state variables
     eventCounter = 0;
 
@@ -123,6 +128,7 @@ def getTimes(filename):
         with open(filename, 'r') as f:
             for line in f.readlines():
                 times.append(float(line.strip()))
+        print "Successfully opened {}".format(filename)
         return times
     except IOError:
         print "Error opening file {}: no such file or directory".format(filename)
