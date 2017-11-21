@@ -1,6 +1,7 @@
 from events import *
 import Queue as Q
 import math
+import sys
 
 # Defining some global system variables
 # This is to prevent function calls with a million parameters and return values
@@ -18,6 +19,9 @@ eventList = Q.PriorityQueue()
 walkLight = 'red'
 driveLight = 'green'
 lastLightChange = 0
+lastStartWalk = 0
+buttonPressed = True
+spawnCount = 0
 
 
 # Defining some global constants
@@ -40,6 +44,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     global autoTimes
     global pedTimes
     global buttonTimes
+    global spawnCount
 
     # Create arrays of uniform distributions
     autoTimes = getTimes(randomAuto)
@@ -68,25 +73,29 @@ def main(N, randomAuto, randomPed, randomButtons):
     #eventList.put(nextButton)
     #eventList.put((120, 'startWalk'))
 
-    while (eventCounter < N):
+    while (spawnCount < N):
         event = eventList.get()
         time = event[0]
         print "~~~~~~~~~~Next event~~~~~~~~~~"
         print "Event type: {}".format(event[1])
         print "Events to date: {}".format(eventCounter)
+        print "Spawns to date: {}".format(spawnCount)
         print "Time: {}".format(event[0])
+        print "Last crosswalk started at: {}".format(lastStartWalk)
+        print "Last light change at: {}".format(lastLightChange)
         print "Stoplight color: {}".format(driveLight)
         print "Crosswalk color: {}".format(walkLight)
+        print "Button pressed: {}".format(buttonPressed)
         print "Number of pedestrains in system: {}".format(len(pedsInSystem))
         print "Number of pedestrains waiting: {}".format(len(pedsWaiting))
         print "Number of pedestrains crossed: {}".format(len(pedDelays))
         print "Number of automobiles in system: {}".format(len(autosInSystem))
         print "Number of automobiles waiting: {}".format(len(autosWaiting))
         print "Number of automobiles crossed: {}".format(len(autoDelays))
-        print
         
         processEvent(event, N)
         eventCounter += 1
+        print
         raw_input()
 
         if (eventList.empty()):
@@ -99,11 +108,15 @@ def uniformToExponential(u, l):     # u is uniform, l is associated lambda
     return e
 
 def getTimes(filename):
-    times = []
-    with open(filename, 'r') as f:
-        for line in f.readlines():
-            times.append(float(line.strip()))
-    return times
+    try:
+        times = []
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                times.append(float(line.strip()))
+        return times
+    except IOError:
+        print "Error opening file {}: no such file or directory".format(filename)
+        sys.exit(1)
 
 def processEvent(event, N):
     # This is going to be where the bulk of the work is contained.
@@ -114,27 +127,34 @@ def processEvent(event, N):
     # functions in a separate file
 
     # Because python is weird, need to specify that eventList is global
-    global eventList
-    global pedsInSystem, pedsWaiting, pedDelays
+    global eventList, spawnCount
+    global pedsInSystem, pedsWaiting, pedDelays, pedTimes
     global autosInSystem, autosWaiting, autoDelays
     global walkLight, lastLightChange, driveLight
+    global buttonPressed, buttonTimes
+    global lastStartWalk
 
     e = event[1]
     
     if (e == 'pedSpawn'):
-        N += 1
+        spawnCount += 1
         speed = pedTimes.pop()*(4.1-2.6) + 2.6
-        pedsInSystem = pedSpawn(eventList, pedsInSystem, time, speed, B + S)
+        pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, pedTimes, rp, uniformToExponential)
         
     elif (e == 'pedArrival'):
-        pedsInSystem, pedsWaiting, eventList = pedArrival(time, eventList, pedsInSystem, pedsWaiting, walkLight, lastLightChange)
+        pedsInSystem, pedsWaiting, eventList, buttonTimes = \
+                      pedArrival(time, eventList, pedsInSystem, pedsWaiting, walkLight, lastLightChange, buttonTimes)
         
     elif (e == 'pedExit'):
         ped = event[2]
         pedDelays = pedExit(time, pedDelays, ped)
+
+    elif (e == 'pedImpatient'):
+        pedImpatient(time, eventList, lastStartWalk)
         
     elif (e == 'buttonPress'):
-        buttonPress()
+        buttonPressed = True
+        eventList = buttonPress(time, eventList, lastLightChange)
         
     elif (e == 'autoSpawn'):
         N += 1
@@ -157,17 +177,19 @@ def processEvent(event, N):
         eventList = yellowExpires(eventList, RED, time)
         
     elif (e == 'greenExpires'):
-        lastLightChange = time
-        driveLight = 'yellow'
-        eventList = greenExpires(eventList, YELLOW, time)
+        if buttonPressed:
+            lastLightChange = time
+            driveLight = 'yellow'
+            eventList = greenExpires(eventList, YELLOW, time)
         
     elif (e == 'startWalk'):
         walkLight = 'green'
+        lastStartWalk = time
         pedsWaiting, eventList = startWalk(time, pedsWaiting, eventList)
         
     elif (e == 'endWalk'):
         walkLight = 'red'
-        endWalk(pedsInSystem)
+        buttonPressed = False
         
     return
 
