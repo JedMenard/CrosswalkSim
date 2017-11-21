@@ -40,6 +40,9 @@ L = 9       # Length of an automobile
 
 def main(N, randomAuto, randomPed, randomButtons):
     N = int(N)
+
+    print N, randomAuto, randomPed, randomButtons
+    return
     
     global time
     global eventList
