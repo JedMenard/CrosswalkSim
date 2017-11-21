@@ -14,7 +14,7 @@ def getTimes(filename):
             times.append(float(line.strip()))
     return times
 
-def processEvent(e):
+def processEvent(e, el, pd, ad):    # event, eventList, pedDelays, autoDelays
     # This is going to be where the bulk of the work is contained.
     # I'm thinking we have this check what type of event e is
     # and call the associated function for proccessing that
@@ -46,7 +46,7 @@ def processEvent(e):
         startWalk()
     elif (e == 'endWalk'):
         endWalk()
-    return
+    return el, pd, ad
 
 def main(N, randomAuto, randomPed, randomButtons):
     B = 330     # Width of a residential block
@@ -91,9 +91,10 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventList.put(nextLight)
     eventList.put(nextButton)
 
-    while (not eventList.empty()):
-        e = eventList.get()
-        print e
+    while (eventCounter > N):
+        e = eventCounter.get()
+        eventList, pedDelays, autoDelays = processEvent(e, eventList, pedDelays, autoDelays)
+        eventCounter += N
 
 
 
@@ -162,4 +163,4 @@ def main(N, randomAuto, randomPed, randomButtons):
 
     
 if __name__ == '__main__':
-    main(100, '../uniform-0-1-00.dat', '../uniform-0-1-01.dat', '../uniform-0-1-02.dat')
+    main(100, 'uniform-0-1-00.dat', 'uniform-0-1-01.dat', 'uniform-0-1-02.dat')
