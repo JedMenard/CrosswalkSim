@@ -40,9 +40,6 @@ L = 9       # Length of an automobile
 
 def main(N, randomAuto, randomPed, randomButtons):
     N = int(N)
-
-    print N, randomAuto, randomPed, randomButtons
-    return
     
     global time
     global eventList
@@ -270,4 +267,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(200, 'uniform-0-1-00.dat', 'uniform-0-1-03.dat', 'uniform-0-1-02.dat')
+    main(200, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-02.dat')
