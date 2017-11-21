@@ -39,8 +39,11 @@ L = 9       # Length of an automobile
             # vk: ped speek, uniform(2.6, 4.1) ft/s
 
 def main(N, randomAuto, randomPed, randomButtons):
+    # Needs to be cast to an int for the grader script
     N = int(N)
-    
+
+    # Globalizing things
+    # If you get an error that says "Using variable before declared", add it to this list
     global time
     global eventList
     global autoTimes
@@ -48,6 +51,9 @@ def main(N, randomAuto, randomPed, randomButtons):
     global buttonTimes
     global spawnCount
 
+    # If you want detailed outputs to the screen, set this to true
+    # Note that it pauses after each event, so leave false when running grader script
+    # Press enter to continue through pause
     debug = False
 
     # Create arrays of uniform distributions
@@ -55,6 +61,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     pedTimes = getTimes(randomPed)
     buttonTimes = getTimes(randomButtons)
 
+    # Make sure the data isn't too short (one of the assignment requirements)
     if len(pedTimes) < N * 5:
         print "Trace file too short."
         sys.exit(1)
@@ -86,13 +93,14 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventList.put(nextPed)
     #eventList.put(nextAuto)
     eventList.put(nextLight)
-    #eventList.put(nextButton)
-    #eventList.put((120, 'startWalk'))
 
+    # Continue until we've spawned the specified number of autos and peds
     while (spawnCount < N):
+
+        # Get the next event
         event = eventList.get()
         time = event[0]
-        if debug:
+        if debug:       # Detailed output
             print "~~~~~~~~~~Next event~~~~~~~~~~"
             print "Event type: {}".format(event[1])
             print "Events to date: {}".format(eventCounter)
@@ -111,16 +119,21 @@ def main(N, randomAuto, randomPed, randomButtons):
             print "Number of automobiles crossed: {}".format(len(autoDelays))
 
             
-        
+        # Process the next event
         processEvent(event, N)
         eventCounter += 1
+
+        # Pause if debugging
         if debug:
             print
             raw_input()
-
+            
+        # If we've run out of events for some reason, break
+        # Note that we should never get to this point
         if (eventList.empty()):
             break
-    
+
+    # Output for grader script
     print "OUTPUT {} {} {}".format(0,0, np.mean(pedDelays))
 
 
@@ -129,7 +142,7 @@ def uniformToExponential(u, l):     # u is uniform, l is associated lambda
     e = -math.log(u)/l              # called l because lambda is reseved in python
     return e
 
-def getTimes(filename):
+def getTimes(filename):             # Loads data from files into array
     try:
         times = []
         with open(filename, 'r') as f:
@@ -174,7 +187,7 @@ def processEvent(event, N):
         pedDelays = pedExit(time, pedDelays, ped)
 
     elif (e == 'pedImpatient'):
-        pedImpatient(time, eventList, lastStartWalk)
+        eventList = pedImpatient(time, eventList, lastStartWalk)
         
     elif (e == 'buttonPress'):
         buttonPressed = True
@@ -214,6 +227,7 @@ def processEvent(event, N):
     elif (e == 'endWalk'):
         walkLight = 'red'
         buttonPressed = False
+        eventList, buttonTimes = endWalk(time, pedsWaiting, eventList, buttonTimes)
         
     return
 
@@ -280,4 +294,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(200, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-02.dat')
+    main(400, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-03.dat')
