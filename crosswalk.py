@@ -60,20 +60,6 @@ def main(N, randomAuto, randomPed, randomButtons):
     autoTimes = initializeReader(randomAuto)
     pedTimes = initializeReader(randomPed)
     buttonTimes = initializeReader(randomButtons)
-    
-    # # File truncation is now handled in getTime function
-    # Make sure the data isn't too short (one of the assignment requirements)
-    #if len(pedTimes) < N * 5:
-    #    print "Trace file too short."
-    #    sys.exit(1)
-    #
-    #if len(autoTimes) < N * 5:
-    #    print "Trace file too short."
-    #    sys.exit(1)
-    #    
-    #if len(buttonTimes) < N * 5:
-    #    print "Trace file too short."
-    #    sys.exit(1)
 
     # Define system state variables
     eventCounter = 0;
@@ -142,19 +128,6 @@ def main(N, randomAuto, randomPed, randomButtons):
 def uniformToExponential(u, l):     # u is uniform, l is associated lambda
     e = -math.log(u)/l              # called l because lambda is reseved in python
     return e
-
-# # This has now been split into initializeReader
-# def getTimes(filename):             # Loads data from files into array
-#    try:
-#        times = []
-#        with open(filename, 'r') as f:
-#            for line in f.readlines():
-#                times.append(float(line.strip()))
-#        print "Successfully opened {}".format(filename)
-#        return times
-#    except IOError:
-#        print "Error opening file {}: no such file or directory".format(filename)
-#        sys.exit(1)
 
 # Open file reader with given filename. Nonzero exit if IOError occurs.
 def initializeReader(filename):
