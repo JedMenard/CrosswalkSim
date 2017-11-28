@@ -204,7 +204,8 @@ def processEvent(event, N):
     elif (e == 'autoSpawn'):
         N += 1
         speed = (getTime(autoTimes)*(35.0-25.0) + 25.0)/360 * 5280  # Feet per second
-        print "Auto spawned at time {0:.2f} with speed {1:.2f}".format(time,speed)
+        if debug:
+            print "Auto spawned at time {0:.2f} with speed {1:.2f}".format(time,speed)
         autosInSystem, autoTimes = autoSpawn(eventList, autosInSystem, time, speed, \
                       B*3.5 + 3*S - 12, autoTimes, ra, uniformToExponential, debug) 
                       # B*3.5 + 3*S - 12 = distance to edge of crosswalk; 3.5 blocks, 3 streets, minus half crosswalk width
