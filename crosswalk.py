@@ -19,9 +19,17 @@ eventList = Q.PriorityQueue()
 walkLight = 'red'
 driveLight = 'green'
 lastLightChange = 0
-lastStartWalk = 0
+lastEndWalk = 0
 buttonPressed = True
 spawnCount = 0
+pedsExited = 0
+
+
+
+# If you want detailed outputs to the screen, set this to true
+# Note that it pauses after each event, so leave false when running grader script
+# Press enter to continue through pause
+debug = True
 
 
 # Defining some global constants
@@ -50,11 +58,8 @@ def main(N, randomAuto, randomPed, randomButtons):
     global pedTimes
     global buttonTimes
     global spawnCount
+    global debug
 
-    # If you want detailed outputs to the screen, set this to true
-    # Note that it pauses after each event, so leave false when running grader script
-    # Press enter to continue through pause
-    debug = True
 
     # Create file readers for uniform distributions
     autoTimes = initializeReader(randomAuto)
@@ -81,7 +86,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventList.put(nextAuto)
     eventList.put(nextLight)
 
-    # Continue until we've spawned the specified number of autos and peds
+    # Continue unti we've spawned the specified number of autos and peds
     while (spawnCount < N):
 
         # Get the next event
@@ -93,7 +98,7 @@ def main(N, randomAuto, randomPed, randomButtons):
             print "Events to date: {}".format(eventCounter)
             print "Spawns to date: {}".format(spawnCount)
             print "Time: {}".format(event[0])
-            print "Last crosswalk started at: {}".format(lastStartWalk)
+            print "Last crosswalk ended at: {}".format(lastEndWalk)
             print "Last light change at: {}".format(lastLightChange)
             print "Stoplight color: {}".format(driveLight)
             print "Crosswalk color: {}".format(walkLight)
@@ -164,47 +169,52 @@ def processEvent(event, N):
     global autosInSystem, autosWaiting, autoDelays, autoTimes
     global walkLight, lastLightChange, driveLight
     global buttonPressed, buttonTimes
-    global lastStartWalk
+    global lastEndWalk
+    global debug
 
     e = event[1]
     
     if (e == 'pedSpawn'):
         spawnCount += 1
         speed = getTime(pedTimes)*(4.1-2.6) + 2.6
-        print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
-        pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, \
-                      pedTimes, rp, uniformToExponential)
+        if debug:
+            print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
+        eventList, pedsInSystem, pedTimes= pedSpawn(eventList, pedsInSystem, time, \
+                    speed, B + S, \
+                    pedTimes, rp, uniformToExponential, debug)
+
         
     elif (e == 'pedArrival'):
         ped = event[2]
         pedsInSystem, pedsWaiting, eventList, buttonTimes = \
                       pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, \
-                      walkLight, lastLightChange, buttonTimes)
+                      walkLight, lastLightChange, buttonTimes, debug)
         
     elif (e == 'pedExit'):
         ped = event[2]
-        pedDelays = pedExit(time, pedDelays, ped)
+        pedDelays = pedExit(time, pedDelays, ped, debug)
 
     elif (e == 'pedImpatient'):
-        eventList = pedImpatient(time, eventList, lastStartWalk)
+        eventList = pedImpatient(time, eventList, lastEndWalk, debug)
         
     elif (e == 'buttonPress'):
         buttonPressed = True
-        eventList = buttonPress(time, eventList, lastLightChange)
+        eventList = buttonPress(time, eventList, lastLightChange, debug)
         
     elif (e == 'autoSpawn'):
         N += 1
         speed = (getTime(autoTimes)*(35.0-25.0) + 25.0)/3600 * 5280  # Feet per second
-        print "Auto spawned at time {0:.2f} with speed {1:.2f}".format(time,speed)
+        if debug:
+            print "Auto spawned at time {0:.2f} with speed {1:.2f}".format(time,speed)
         autosInSystem, autoTimes = autoSpawn(eventList, autosInSystem, time, speed, \
-                      B*3.5 + S*3 - 12, autoTimes, ra, uniformToExponential) 
-                      # B*3.5 + S*3 - 12 = distance to edge of crosswalk; 3.5 blocks, 3 streets, minus half crosswalk width
+                      B*3.5 + 3*S - 12, autoTimes, ra, uniformToExponential, debug) 
+                      # B*3.5 + 3*S - 12 = distance to edge of crosswalk; 3.5 blocks, 3 streets, minus half crosswalk width
                       # ToDo: Check whether the back of the car has crossed over the crosswalk at greenExpires
         
     elif (e == 'autoArrival'):
         auto = event[2]
         autosInSystem, autosWaiting, eventList = autoArrival(time, eventList, auto, \
-                      autosInSystem, autosWaiting, driveLight, lastLightChange)
+                      autosInSystem, autosWaiting, walkLight, lastLightChange, debug)
         
     elif (e == 'autoExit'):
         autoExit()
@@ -212,32 +222,32 @@ def processEvent(event, N):
     elif (e == 'redExpires'):
         lastLightChange = time
         driveLight = 'green'
-        eventList = redExpires(eventList, GREEN, time)
+        eventList = redExpires(eventList, GREEN, time, debug)
         
     elif (e == 'yellowExpires'):
         lastLightChange = time
         driveLight = 'red'
-        eventList = yellowExpires(eventList, RED, time)
+        eventList = yellowExpires(eventList, RED, time, debug)
         
     elif (e == 'greenExpires'):
         if buttonPressed:
             lastLightChange = time
             driveLight = 'yellow'
-            eventList = greenExpires(eventList, YELLOW, time)
+            eventList = greenExpires(eventList, YELLOW, time, debug)
             
     elif (e == 'stopAutos'):
         eventList, autosWaiting, autosInSystem = stopAutos(time, autosWaiting, autosInSystem, \
-                      eventList, B*3.5 + S*3 - 12)
+                      eventList, B*3.5 + S*3 - 12, debug)
         
     elif (e == 'startWalk'):
         walkLight = 'green'
-        lastStartWalk = time
-        pedsWaiting, eventList = startWalk(time, pedsWaiting, eventList)
+        pedsWaiting, eventList = startWalk(time, pedsWaiting, eventList, debug)
         
     elif (e == 'endWalk'):
         walkLight = 'red'
+        lastEndWalk = time
         buttonPressed = False
-        eventList, buttonTimes = endWalk(time, pedsWaiting, eventList, buttonTimes)
+        eventList, buttonTimes = endWalk(time, pedsWaiting, eventList, buttonTimes, debug)
         
     return
 
@@ -304,4 +314,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(400, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-03.dat')
+    main(400, 'uniform-0-1-00.dat', 'uniform-0-1-05.dat', 'uniform-0-1-02.dat')

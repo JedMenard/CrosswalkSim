@@ -10,7 +10,7 @@ def getTime(filereader):
         print "ValueError in file {}: unexpected end of file".format(filereader.name)
         sys.exit(1)
 
-def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, uniformToExponential):
+def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, uniformToExponential, debug):
     # A pedestrian is spawned in the system (a block away from the crosswalk)
     # Pedestrians are tracked as tupes of the form (spawn_time, speed)
 
@@ -22,88 +22,111 @@ def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, unifo
     nextArrivalTime = time + distance/speed
     nextArrival = (nextArrivalTime, 'pedArrival', ped)
     eventList.put(nextArrival)
-    print "Event added: pedArrival at {}".format(nextArrivalTime)
+    if debug:
+        print "Event added: pedArrival at {}".format(nextArrivalTime)
 
     # Create an event for the next pedestrian to be spawned
     nextSpawnTime = time + uniformToExponential(getTime(pedTimes), rp)
     nextSpawn = (nextSpawnTime, 'pedSpawn')
     eventList.put(nextSpawn)
-    print "Event added: pedSpawn at {}".format(nextSpawnTime)
+    if debug:
+        print "Event added: pedSpawn at {}".format(nextSpawnTime)
 
-    return pedsInSystem, pedTimes
+    return eventList, pedsInSystem, pedTimes
 
-def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLightChange, buttonTimes):
+def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLightChange, buttonTimes, debug):
     # A pedestrian arrives at the crosswalk
 
     # Remove the arriving pedestrian from the system
     index = pedsInSystem.index(ped)
     ped = pedsInSystem.pop(index)
-    print ped
+    ped += (time,)
+    if debug:
+        print ped
 
     # If the cross sign is green upon arrival
     if light == 'green':
-        crosstime = S/ped[1]       # Calculate time needed to cross
-        print "Pedestrian speed: {}".format(ped[1])
-        print "Cross time: {}".format(crosstime)
-        print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange)
+        crosstime = 46/ped[1]       # Calculate time needed to cross
+
+        if debug:
+            print "Pedestrian speed: {}".format(ped[1])
+            print "Cross time: {}".format(crosstime)
+            print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange)
+
         if crosstime < 18 - (time - lastLightChange):   # If the ped has enough time to cross
             exitTime = time + crosstime                 # Create and enqueue the event for the pedestrian leaving the system
+            ped += (time,)
             exitEvent = (exitTime, 'pedExit', ped)
             eventList.put(exitEvent)
-            print "Event added: pedExit at {}".format(exitTime)
+            if debug:
+                print "Event added: pedExit at {}".format(exitTime)
         else:                                           # If the ped cannot cross in time
             pedsWaiting.append(ped)
     else:
         r = getTime(buttonTimes)       # If the cross sign is not green,
         n = len(pedsWaiting)        # determine if the ped will push the button
-        print "Random number generated: {}".format(r)
-        print "Target random number: {}".format(15./16 if n == 0 else 1./(n+1))
+        if debug:
+            print "Random number generated: {}".format(r)
+            print "Target random number: {}".format(15./16 if n == 0 else 1./(n+1))
         if (n == 0 and r < (15./16)):
             eventList.put((time, 'buttonPress'))        # Push the button now
-            print "Event added: buttonPress at {}".format(time)
+            if debug:
+                print "Event added: buttonPress at {}".format(time)
         elif (n > 0 and r < (1./(n+1))):
             eventList.put((time, 'buttonPress'))        # Push the button now
-            print "Event added: buttonPress at {}".format(time)
+            if debug:
+                print "Event added: buttonPress at {}".format(time)
         else:
             eventList.put((time+60, 'pedImpatient'))    # Don't push button, make event for impatience
-            print "Event added: pedImpatient at {}".format(time+60)
+            if debug:
+                print "Event added: pedImpatient at {}".format(time+60)
         pedsWaiting.append(ped)
         
     return pedsInSystem, pedsWaiting, eventList, buttonTimes
 
-def pedExit(time, pedDelays, ped):
+def pedExit(time, pedDelays, ped, debug):
     # A pedestrian exits the system
     expectedTime = (330+46*2)/ped[1]            # Calculate their optimal time to get through the system
-    delay = (time - ped[0]) - expectedTime      # Calculate delay
+    #delay = (time - ped[0]) - expectedTime      # Calculate delay
+    delay = ped[3] - ped[2]                     # Delay is however long you were at the crosswalk
     pedDelays.append(delay)                     # Add delay to list
+
+    if debug:
+        print "Pedestrian exiting."
+        print "Pedestrian entered at time {0:.2f} with speed {1:.2f}".format(ped[0], ped[1])
+        print "Current time: {0:.2f}".format(time)
+        print "Optimal time: {0:.2f}".format(expectedTime)
+        print "Delay: {0:.2f}".format(delay)
     return pedDelays
 
-def pedImpatient(time, eventList, lastStartWalk):
+def pedImpatient(time, eventList, lastEndWalk, debug):
     # A pedestrian has become impatient
 
-    # This if block prevents peds from getting impatient if there has been a nowalk->walk transition in the last minute
-    if (time - lastStartWalk) < 60:
+    # This if block prevents peds from getting impatient if there has been a walk sign in the last minute
+    if (time - lastEndWalk) < (60 - .000001):     # Note: allowing for some small roundoff error
         return eventList
 
     # Push the button now
     eventList.put((time, 'buttonPress'))
-    print "Event added: buttonPress at {}".format(time)
+    if debug:
+        print "Event added: buttonPress at {}".format(time)
     return eventList
 
-def buttonPress(time, eventList, lastLightChange):
+def buttonPress(time, eventList, lastLightChange, debug):
     # A pedestrian pushes a button
 
     # If the minimum time for a green light has been exceeded,
     # change the color of the traffic light now
     if (time - lastLightChange) > 35:
         eventList.put((time, 'greenExpires'))
-        print "Event added: greenExpires at {}".format(time)
+        if debug:
+            print "Event added: greenExpires at {}".format(time)
 
     # Note: If the minimum hasn't been exceeded, we don't need to make a new event
     # because there already is one
     return eventList
 
-def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, uniformToExponential):
+def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, uniformToExponential, debug):
     # An automobile is spawned in the system
     auto = (time, speed)
     autosInSystem.append(auto)
@@ -113,17 +136,20 @@ def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, un
     nextArrivalTime = time + distance/speed
     nextArrival = (nextArrivalTime, 'autoArrival', auto)
     eventList.put(nextArrival)
-    print "Event added: autoArrival at {}".format(nextArrivalTime)
+    if debug:
+        print "Event added: autoArrival at {}".format(nextArrivalTime)
     
     # Create an event for the next auto to be spawned
     nextSpawnTime = time + uniformToExponential(getTime(autoTimes), ra)
     nextSpawn = (nextSpawnTime, 'autoSpawn')
     eventList.put(nextSpawn)
-    
-    print "Event added: autoSpawn at {}".format(nextSpawnTime)
+
+    if debug:
+        print "Event added: autoSpawn at {}".format(nextSpawnTime)
     return autosInSystem, autoTimes
 
-def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastLightChange):
+
+def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastLightChange, debug):
 #    # An automobile arives at the intersection
 #    
 #    # Remove the arriving auto from the system
@@ -137,72 +163,82 @@ def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastL
 #      print "Cross time: {}".format(crosstime)
 #      print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange) 
 #      ####
-      
+
     return autosInSystem, autosWaiting, eventList
 
-def autoExit():
+def autoExit(time, autoDelays, auto, debug):
     # An automobile exits the system
     return
 
-def redExpires(eventList, GREEN, time):
+def redExpires(eventList, GREEN, time, debug):
     # Light changes from red to green
 
     # Create and enqueue the new event
     nextGreen = (time + GREEN, 'greenExpires')
     eventList.put(nextGreen)
-    print "Event added: greenExpires at {}".format(time + GREEN)
+    if debug:
+        print "Event added: greenExpires at {}".format(time + GREEN)
 
     # End walk
     # Create an event to end the crosswalk now
     walkEnd = (time, 'endWalk')
     eventList.put(walkEnd)
-    print "Event added: endWalk at {}".format(time)
+    if debug:
+        print "Event added: endWalk at {}".format(time)
     return eventList
 
-def yellowExpires(eventList, RED, time):
+def yellowExpires(eventList, RED, time, debug):
     # Light changes from yellow to red
     # Create and enqueue the new event
     nextRed = (time+RED, 'redExpires')
     eventList.put(nextRed)
-    print "Event added: redExpires at {}".format(time+RED)
+    if debug:
+        print "Event added: redExpires at {}".format(time+RED)
 
     # Initiate start walk
     # Create an event to start the crosswalk now
     walkStart = (time, 'startWalk')
     eventList.put(walkStart)
-    print "Event added: startWalk at {}".format(time)
+    if debug:
+        print "Event added: startWalk at {}".format(time)
     return eventList
 
-def greenExpires(eventList, YELLOW, time):
+def greenExpires(eventList, YELLOW, time, debug):
     # Light changes from green to yellow
     # Create and enqueue the new event
     nextYellow = (time+YELLOW, 'yellowExpires')
     eventList.put(nextYellow)
-    print "Event added: yellowExpires at {}".format(time+YELLOW)
-    
+
+    if debug:
+        print "Event added: yellowExpires at {}".format(time+YELLOW)
+
     # TODO: Add code in here for the cars?
-    stopAutos = (time, 'stopAutos')
-    eventList.put(stopAutos)
+    autosStop = (time, 'stopAutos')
+    eventList.put(autosStop)
     print "Event added: stopAutos at {}".format(time)
     return eventList
 
-def stopAutos(time, autosWaiting, autosInSystem, eventList,  distance):
+
+def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
     for auto in autosInSystem:
       crossTime = auto[0] + (33 + distance) / auto[1]     # Auto leaves the crosswalk 
       arrivalTime = auto[0] + distance/auto[1]            # Auto arrives before the transition out of red
       
-      print "Auto speed: {}".format(auto[1])
-      print "Cross time: {}".format(crossTime)
-      print "Arrival time: {}".format(arrivalTime)
+      if debug:
+        print "Auto speed: {}".format(auto[1])
+        print "Cross time: {}".format(crossTime)
+        print "Arrival time: {}".format(arrivalTime)
       
       if (arrivalTime < time + 26) and (crossTime > time + 8):
-        print "Auto is delayed."
+        if debug:
+          print "Auto is delayed."
+          
         autosWaiting.append(auto)
       
       print
     return eventList, autosWaiting, autosInSystem
     
-def startWalk(time, pedsWaiting, eventList):
+def startWalk(time, pedsWaiting, eventList, debug):
     # Crosswalk sign turns on, peds start to cross
     crossed = 0
     i = 0
@@ -214,9 +250,11 @@ def startWalk(time, pedsWaiting, eventList):
         if crosstime < 18:      # Check if the current pedestrian can cross in time
             # Create and enqueue the event to leave the system
             exitTime = time + crosstime
+            ped += (time,)
             exitEvent = (exitTime, 'pedExit', ped)
             eventList.put(exitEvent)
-            print "Event added: pedExit at {}".format(exitTime)
+            if debug:
+                print "Event added: pedExit at {}".format(exitTime)
             pedsWaiting.pop(i)
             crossed += 1
         else:
@@ -224,21 +262,30 @@ def startWalk(time, pedsWaiting, eventList):
             i += 1
     return pedsWaiting, eventList
 
-def endWalk(time, pedsWaiting, eventList, buttonTimes):
+def endWalk(time, pedsWaiting, eventList, buttonTimes, debug):
     # Any remaining pedestrians will get impatient in one minute
     if pedsWaiting:
             eventList.put((time+60, 'pedImpatient'))
-            print "Event added: pedImpatient at {}".format(time+60)
-            print "Target random number: {}".format(15/16)
+            if debug:
+                print "Event added: pedImpatient at {}".format(time+60)
 
-    # Each remaining pedestrian needs to push the button with probability 15/16
+            # Each remaining pedestrian needs to push the button with probability 15/16
+            remaining = len(pedsWaiting)
+            target = 1 - (1./16) ** remaining
+            r = getTime(buttonTimes)
 
-    for ped in pedsWaiting:
-        r = getTime(buttonTimes)
-        print "Random number generated: {}".format(r)
-        if r < (15./16):
-            eventList.put((time, 'buttonPress'))
-            print "Event added: buttonPress at {}".format(time)
+            if debug:
+                print "{} pedestrians remaining".format(remaining)
+                print "Target random number: {}".format(target)
+                print "Random number generated: {}".format(r)
+
+            if r < target:
+                eventList.put((time, 'buttonPress'))
+                if debug:
+                    print "Event added: buttonPress at {}".format(time)
+
+
+
     return eventList, buttonTimes
 
 
