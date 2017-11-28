@@ -29,7 +29,7 @@ pedsExited = 0
 # If you want detailed outputs to the screen, set this to true
 # Note that it pauses after each event, so leave false when running grader script
 # Press enter to continue through pause
-debug = False
+debug = True
 
 
 # Defining some global constants

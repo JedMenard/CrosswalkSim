@@ -167,6 +167,8 @@ def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastL
 
 def autoExit(time, autoDelays, auto, debug):
     # An automobile exits the system
+    expectedTime = (330*7 + 46*6)/auto[1]        # Calculate their optimal time to get through the system
+    autoDelays.append(delay)                     # Add delay to list
     return
 
 def redExpires(eventList, GREEN, time, debug):
@@ -220,6 +222,8 @@ def greenExpires(eventList, YELLOW, time, debug):
 
 
 def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
+
+    
     for auto in autosInSystem:
       crossTime = auto[0] + (33 + distance) / auto[1]     # Auto leaves the crosswalk 
       arrivalTime = auto[0] + distance/auto[1]            # Auto arrives before the transition out of red
@@ -233,7 +237,12 @@ def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
         if debug:
           print "Auto is delayed."
           
+        b = distance - auto[1] ** 2 / 20     # Braking distance
+        t = auto[1] / 10                    # Braking time
+        
+        
         autosWaiting.append(auto)
+      
       
     return eventList, autosWaiting, autosInSystem
     
