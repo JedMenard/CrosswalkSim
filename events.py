@@ -30,7 +30,7 @@ def pedSpawn(eventList, pedsInSystem, time, speed, distance, pedTimes, rp, unifo
     eventList.put(nextSpawn)
     print "Event added: pedSpawn at {}".format(nextSpawnTime)
 
-    return pedsInSystem, pedTimes
+    return eventList, pedsInSystem, pedTimes
 
 def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLightChange, buttonTimes):
     # A pedestrian arrives at the crosswalk
@@ -78,11 +78,11 @@ def pedExit(time, pedDelays, ped):
     pedDelays.append(delay)                     # Add delay to list
     return pedDelays
 
-def pedImpatient(time, eventList, lastStartWalk):
+def pedImpatient(time, eventList, lastEndWalk):
     # A pedestrian has become impatient
 
-    # This if block prevents peds from getting impatient if there has been a nowalk->walk transition in the last minute
-    if (time - lastStartWalk) < 60:
+    # This if block prevents peds from getting impatient if there has been a walk sign in the last minute
+    if (time - lastEndWalk) < 60:
         return eventList
 
     # Push the button now
@@ -207,7 +207,7 @@ def endWalk(time, pedsWaiting, eventList, buttonTimes):
     if pedsWaiting:
             eventList.put((time+60, 'pedImpatient'))
             print "Event added: pedImpatient at {}".format(time+60)
-            print "Target random number: {}".format(15/16)
+            print "Target random number: {}".format(15./16)
 
     # Each remaining pedestrian needs to push the button with probability 15/16
 

@@ -19,9 +19,10 @@ eventList = Q.PriorityQueue()
 walkLight = 'red'
 driveLight = 'green'
 lastLightChange = 0
-lastStartWalk = 0
+lastEndWalk = 0
 buttonPressed = True
 spawnCount = 0
+pedsExited = 0
 
 
 # Defining some global constants
@@ -81,7 +82,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventList.put(nextAuto)
     eventList.put(nextLight)
 
-    # Continue until we've spawned the specified number of autos and peds
+    # Continue unti we've spawned the specified number of autos and peds
     while (spawnCount < N):
 
         # Get the next event
@@ -93,7 +94,7 @@ def main(N, randomAuto, randomPed, randomButtons):
             print "Events to date: {}".format(eventCounter)
             print "Spawns to date: {}".format(spawnCount)
             print "Time: {}".format(event[0])
-            print "Last crosswalk started at: {}".format(lastStartWalk)
+            print "Last crosswalk ended at: {}".format(lastEndWalk)
             print "Last light change at: {}".format(lastLightChange)
             print "Stoplight color: {}".format(driveLight)
             print "Crosswalk color: {}".format(walkLight)
@@ -164,7 +165,7 @@ def processEvent(event, N):
     global autosInSystem, autosWaiting, autoDelays, autoTimes
     global walkLight, lastLightChange, driveLight
     global buttonPressed, buttonTimes
-    global lastStartWalk
+    global lastEndWalk
 
     e = event[1]
     
@@ -172,8 +173,10 @@ def processEvent(event, N):
         spawnCount += 1
         speed = getTime(pedTimes)*(4.1-2.6) + 2.6
         print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
-        pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, \
-                      pedTimes, rp, uniformToExponential)
+        eventList, pedsInSystem, pedTimes= pedSpawn(eventList, pedsInSystem, time, \
+                    speed, B + S, \
+                    pedTimes, rp, uniformToExponential)
+
         
     elif (e == 'pedArrival'):
         ped = event[2]
@@ -186,7 +189,7 @@ def processEvent(event, N):
         pedDelays = pedExit(time, pedDelays, ped)
 
     elif (e == 'pedImpatient'):
-        eventList = pedImpatient(time, eventList, lastStartWalk)
+        eventList = pedImpatient(time, eventList, lastEndWalk)
         
     elif (e == 'buttonPress'):
         buttonPressed = True
@@ -227,11 +230,11 @@ def processEvent(event, N):
         
     elif (e == 'startWalk'):
         walkLight = 'green'
-        lastStartWalk = time
         pedsWaiting, eventList = startWalk(time, pedsWaiting, eventList)
         
     elif (e == 'endWalk'):
         walkLight = 'red'
+        lastEndWalk = time
         buttonPressed = False
         eventList, buttonTimes = endWalk(time, pedsWaiting, eventList, buttonTimes)
         
@@ -300,4 +303,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(80, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-03.dat')
+    main(400, 'uniform-0-1-00.dat', 'uniform-0-1-05.dat', 'uniform-0-1-02.dat')
