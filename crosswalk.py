@@ -54,7 +54,7 @@ def main(N, randomAuto, randomPed, randomButtons):
     # If you want detailed outputs to the screen, set this to true
     # Note that it pauses after each event, so leave false when running grader script
     # Press enter to continue through pause
-    debug = True
+    debug = False
 
     # Create file readers for uniform distributions
     autoTimes = initializeReader(randomAuto)
@@ -300,4 +300,4 @@ def processEvent(event, N):
 
     
 if __name__ == '__main__':
-    main(400, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-03.dat')
+    main(80, 'uniform-0-1-00.dat', 'uniform-0-1-06.dat', 'uniform-0-1-03.dat')

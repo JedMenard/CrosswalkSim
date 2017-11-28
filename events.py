@@ -42,7 +42,7 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
 
     # If the cross sign is green upon arrival
     if light == 'green':
-        crosstime = S/ped[1]       # Calculate time needed to cross
+        crosstime = 46/ped[1]       # Calculate time needed to cross
         print "Pedestrian speed: {}".format(ped[1])
         print "Cross time: {}".format(crosstime)
         print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange)
