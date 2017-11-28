@@ -87,7 +87,6 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
 def pedExit(time, pedDelays, ped, debug):
     # A pedestrian exits the system
     expectedTime = (330+46*2)/ped[1]            # Calculate their optimal time to get through the system
-    #delay = (time - ped[0]) - expectedTime      # Calculate delay
     delay = ped[3] - ped[2]                     # Delay is however long you were at the crosswalk
     pedDelays.append(delay)                     # Add delay to list
 
