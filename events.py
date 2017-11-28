@@ -76,13 +76,19 @@ def pedExit(time, pedDelays, ped):
     expectedTime = (330+46*2)/ped[1]            # Calculate their optimal time to get through the system
     delay = (time - ped[0]) - expectedTime      # Calculate delay
     pedDelays.append(delay)                     # Add delay to list
+
+    print "Pedestrian exiting."
+    print "Pedestrian entered at time {0:.2f} with speed {1:.2f}".format(ped[0], ped[1])
+    print "Current time: {0:.2f}".format(time)
+    print "Optimal time: {0:.2f}".format(expectedTime)
+    print "Delay: {0:.2f}".format(delay)
     return pedDelays
 
 def pedImpatient(time, eventList, lastEndWalk):
     # A pedestrian has become impatient
 
     # This if block prevents peds from getting impatient if there has been a walk sign in the last minute
-    if (time - lastEndWalk) < 60:
+    if (time - lastEndWalk) < (60 - .000001):     # Note: allowing for some small roundoff error
         return eventList
 
     # Push the button now
@@ -207,16 +213,22 @@ def endWalk(time, pedsWaiting, eventList, buttonTimes):
     if pedsWaiting:
             eventList.put((time+60, 'pedImpatient'))
             print "Event added: pedImpatient at {}".format(time+60)
-            print "Target random number: {}".format(15./16)
 
-    # Each remaining pedestrian needs to push the button with probability 15/16
+            # Each remaining pedestrian needs to push the button with probability 15/16
+            remaining = len(pedsWaiting)
+            target = 1 - (1./16) ** remaining
+            r = getTime(buttonTimes)
 
-    for ped in pedsWaiting:
-        r = getTime(buttonTimes)
-        print "Random number generated: {}".format(r)
-        if r < (15./16):
-            eventList.put((time, 'buttonPress'))
-            print "Event added: buttonPress at {}".format(time)
+            print "{} pedestrians remaining".format(remaining)
+            print "Target random number: {}".format(target)
+            print "Random number generated: {}".format(r)
+
+            if r < target:
+                eventList.put((time, 'buttonPress'))
+                print "Event added: buttonPress at {}".format(time)
+
+
+
     return eventList, buttonTimes
 
 

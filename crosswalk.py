@@ -25,6 +25,13 @@ spawnCount = 0
 pedsExited = 0
 
 
+
+# If you want detailed outputs to the screen, set this to true
+# Note that it pauses after each event, so leave false when running grader script
+# Press enter to continue through pause
+debug = False
+
+
 # Defining some global constants
 B = 330     # Width of a residential block
 w = 24      # Width of crosswalk
@@ -51,11 +58,8 @@ def main(N, randomAuto, randomPed, randomButtons):
     global pedTimes
     global buttonTimes
     global spawnCount
+    global debug
 
-    # If you want detailed outputs to the screen, set this to true
-    # Note that it pauses after each event, so leave false when running grader script
-    # Press enter to continue through pause
-    debug = False
 
     # Create file readers for uniform distributions
     autoTimes = initializeReader(randomAuto)
@@ -166,13 +170,15 @@ def processEvent(event, N):
     global walkLight, lastLightChange, driveLight
     global buttonPressed, buttonTimes
     global lastEndWalk
+    global debug
 
     e = event[1]
     
     if (e == 'pedSpawn'):
         spawnCount += 1
         speed = getTime(pedTimes)*(4.1-2.6) + 2.6
-        print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
+        if debug:
+            print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
         eventList, pedsInSystem, pedTimes= pedSpawn(eventList, pedsInSystem, time, \
                     speed, B + S, \
                     pedTimes, rp, uniformToExponential)
