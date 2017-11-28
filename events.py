@@ -42,7 +42,7 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
 
     # If the cross sign is green upon arrival
     if light == 'green':
-        crosstime = 46/ped[1]       # Calculate time needed to cross
+        crosstime = S/ped[1]       # Calculate time needed to cross
         print "Pedestrian speed: {}".format(ped[1])
         print "Cross time: {}".format(crosstime)
         print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange)
@@ -103,15 +103,39 @@ def buttonPress(time, eventList, lastLightChange):
     # because there already is one
     return eventList
 
-def autoSpawn(eventList, autosInSystem, autoTimes, time):
+def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, uniformToExponential):
     # An automobile is spawned in the system
-    #TODO: Add auto to system
-    autosInSystem.append(time)
-    return
+    auto = (time, speed)
+    autosInSystem.append(auto)
+    
+    # Create an event for the auto's arrival at the crosswalk
+    # May change to trigger on greenExpires
+    nextArrivalTime = time + distance/speed
+    nextArrival = (nextArrivalTime, 'autoArrival', auto)
+    eventList.put(nextArrival)
+    print "Event added: autoArrival at {}".format(nextArrivalTime)
+    
+    # Create an event for the next auto to be spawned
+    nextSpawnTime = time + uniformToExponential(getTime(autoTimes), ra)
+    nextSpawn = (nextSpawnTime, 'autoSpawn')
+    eventList.put(nextSpawn)
+    
+    print "Event added: autoSpawn at {}".format(nextSpawnTime)
+    return autosInSystem, autoTimes
 
-def autoArrival():
+def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastLightChange):
     # An automobile arives at the intersection
-    return
+    
+    # Remove the arriving auto from the system
+    index = autosInSystem.index(auto)
+    auto = autosInSystem.pop(index)
+    print auto
+    
+    if light == 'yellow':
+      crosstime = (w + L)/auto[1]
+      ####
+      
+    return autosInSystem, autosWaiting, eventList
 
 def autoExit():
     # An automobile exits the system

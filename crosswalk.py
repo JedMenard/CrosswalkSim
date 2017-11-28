@@ -78,7 +78,7 @@ def main(N, randomAuto, randomPed, randomButtons):
 
     # Enqueue initial events
     eventList.put(nextPed)
-    #eventList.put(nextAuto)
+    eventList.put(nextAuto)
     eventList.put(nextLight)
 
     # Continue until we've spawned the specified number of autos and peds
@@ -161,7 +161,7 @@ def processEvent(event, N):
     # Because python is weird, need to specify that eventList is global
     global eventList, spawnCount
     global pedsInSystem, pedsWaiting, pedDelays, pedTimes
-    global autosInSystem, autosWaiting, autoDelays
+    global autosInSystem, autosWaiting, autoDelays, autoTimes
     global walkLight, lastLightChange, driveLight
     global buttonPressed, buttonTimes
     global lastStartWalk
@@ -172,7 +172,8 @@ def processEvent(event, N):
         spawnCount += 1
         speed = getTime(pedTimes)*(4.1-2.6) + 2.6
         print "Pedestrian spawned at time {0:.2f} with speed {1:.2f}".format(time, speed)
-        pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, pedTimes, rp, uniformToExponential)
+        pedsInSystem, pedTimes = pedSpawn(eventList, pedsInSystem, time, speed, B + S, \
+                      pedTimes, rp, uniformToExponential)
         
     elif (e == 'pedArrival'):
         ped = event[2]
@@ -193,10 +194,17 @@ def processEvent(event, N):
         
     elif (e == 'autoSpawn'):
         N += 1
-        autosInSystem = autoSpawn(autosInSystem, time)
+        speed = (getTime(autoTimes)*(35.0-25.0) + 25.0)/360 * 5280  # Feet per second
+        print "Auto spawned at time {0:.2f} with speed {1:.2f}".format(time,speed)
+        autosInSystem, autoTimes = autoSpawn(eventList, autosInSystem, time, speed, \
+                      B*3.5 + 3*S - 12, autoTimes, ra, uniformToExponential) 
+                      # B*3.5 + 3*S - 12 = distance to edge of crosswalk; 3.5 blocks, 3 streets, minus half crosswalk width
+                      # ToDo: Check whether the back of the car has crossed over the crosswalk at greenExpires
         
     elif (e == 'autoArrival'):
-        autoArrival()
+        auto = event[2]
+        autosInSystem, autosWaiting, eventList = autoArrival(time, eventList, auto, \
+                      autosInSystem, autosWaiting, walkLight, lastLightChange)
         
     elif (e == 'autoExit'):
         autoExit()
