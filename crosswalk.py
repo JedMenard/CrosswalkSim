@@ -20,7 +20,7 @@ walkLight = 'red'
 driveLight = 'green'
 lastLightChange = 0
 lastEndWalk = 0
-buttonPressed = True
+buttonPressed = False
 spawnCount = 0
 pedsExited = 0
 
@@ -125,8 +125,10 @@ def main(N, randomAuto, randomPed, randomButtons):
         if (eventList.empty()):
             break
 
+    pedMean, pedVar = welfords(pedDelays)
+
     # Output for grader script
-    print "OUTPUT {} {} {}".format(0,0, np.mean(pedDelays))
+    print "OUTPUT {} {} {}".format(0,0, pedMean)
 
 
 
@@ -247,7 +249,20 @@ def processEvent(event, N):
         
     return
 
+def welfords(samples):
+    total = 0
+    totalsq = 0
+    N = 0
+    
+    for sample in samples:
+        total += sample
+        totalsq += sample**2
+        N += 1
 
+    mean = total/N
+    variance = (totalsq - N*mean**2)/(N-1)
+
+    return mean, variance
 
 
 
