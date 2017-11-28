@@ -126,9 +126,10 @@ def main(N, randomAuto, randomPed, randomButtons):
             break
 
     pedMean, pedVar = welfords(pedDelays)
+    autoMean, autoVar = welfords(autoDelays)
 
     # Output for grader script
-    print "OUTPUT {} {} {}".format(0,0, pedMean)
+    print "OUTPUT {} {} {}".format(autoMean, autoVar, pedMean)
 
 
 
