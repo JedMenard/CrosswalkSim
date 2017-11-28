@@ -124,16 +124,19 @@ def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, un
     return autosInSystem, autoTimes
 
 def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastLightChange):
-    # An automobile arives at the intersection
-    
-    # Remove the arriving auto from the system
-    index = autosInSystem.index(auto)
-    auto = autosInSystem.pop(index)
-    print auto
-    
-    if light == 'yellow':
-      crosstime = (w + L)/auto[1]
-      ####
+#    # An automobile arives at the intersection
+#    
+#    # Remove the arriving auto from the system
+#    index = autosInSystem.index(auto)
+#    auto = autosInSystem.pop(index)
+#    print auto
+#    
+#    if light == 'yellow':
+#      crosstime = (w + L)/auto[1]
+#      print "Pedestrian speed: {}".format(ped[1])
+#      print "Cross time: {}".format(crosstime)
+#      print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange) 
+#      ####
       
     return autosInSystem, autosWaiting, eventList
 
@@ -176,10 +179,29 @@ def greenExpires(eventList, YELLOW, time):
     nextYellow = (time+YELLOW, 'yellowExpires')
     eventList.put(nextYellow)
     print "Event added: yellowExpires at {}".format(time+YELLOW)
-
+    
     # TODO: Add code in here for the cars?
+    stopAutos = (time, 'stopAutos')
+    eventList.put(stopAutos)
+    print "Event added: stopAutos at {}".format(time)
     return eventList
 
+def stopAutos(time, autosWaiting, autosInSystem, eventList,  distance):
+    for auto in autosInSystem:
+      crossTime = auto[0] + (33 + distance) / auto[1]     # Auto leaves the crosswalk 
+      arrivalTime = auto[0] + distance/auto[1]            # Auto arrives before the transition out of red
+      
+      print "Auto speed: {}".format(auto[1])
+      print "Cross time: {}".format(crossTime)
+      print "Arrival time: {}".format(arrivalTime)
+      
+      if (arrivalTime < time + 26) and (crossTime > time + 8):
+        print "Auto is delayed."
+        autosWaiting.append(auto)
+      
+      print
+    return eventList, autosWaiting, autosInSystem
+    
 def startWalk(time, pedsWaiting, eventList):
     # Crosswalk sign turns on, peds start to cross
     crossed = 0
