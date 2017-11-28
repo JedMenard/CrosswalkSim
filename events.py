@@ -40,6 +40,7 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
     # Remove the arriving pedestrian from the system
     index = pedsInSystem.index(ped)
     ped = pedsInSystem.pop(index)
+    ped += (time,)
     if debug:
         print ped
 
@@ -54,6 +55,7 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
 
         if crosstime < 18 - (time - lastLightChange):   # If the ped has enough time to cross
             exitTime = time + crosstime                 # Create and enqueue the event for the pedestrian leaving the system
+            ped += (time,)
             exitEvent = (exitTime, 'pedExit', ped)
             eventList.put(exitEvent)
             if debug:
@@ -85,7 +87,8 @@ def pedArrival(time, eventList, ped, pedsInSystem, pedsWaiting, light, lastLight
 def pedExit(time, pedDelays, ped, debug):
     # A pedestrian exits the system
     expectedTime = (330+46*2)/ped[1]            # Calculate their optimal time to get through the system
-    delay = (time - ped[0]) - expectedTime      # Calculate delay
+    #delay = (time - ped[0]) - expectedTime      # Calculate delay
+    delay = ped[3] - ped[2]                     # Delay is however long you were at the crosswalk
     pedDelays.append(delay)                     # Add delay to list
 
     if debug:
@@ -220,6 +223,7 @@ def startWalk(time, pedsWaiting, eventList, debug):
         if crosstime < 18:      # Check if the current pedestrian can cross in time
             # Create and enqueue the event to leave the system
             exitTime = time + crosstime
+            ped += (time,)
             exitEvent = (exitTime, 'pedExit', ped)
             eventList.put(exitEvent)
             if debug:
