@@ -211,7 +211,7 @@ def processEvent(event, N):
         autosInSystem, autoTimes = autoSpawn(eventList, autosInSystem, time, speed, \
                       B*3.5 + 3*S - 12, autoTimes, ra, uniformToExponential, debug) 
                       # B*3.5 + 3*S - 12 = distance to edge of crosswalk; 3.5 blocks, 3 streets, minus half crosswalk width
-                      # ToDo: Check whether the back of the car has crossed over the crosswalk at greenExpires
+                      
         
     elif (e == 'autoArrival'):
         auto = event[2]
@@ -267,9 +267,6 @@ def welfords(samples):
     variance = (totalsq - N*mean**2)/(N-1)
 
     return mean, variance
-
-
-
 
 
 
