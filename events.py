@@ -214,7 +214,8 @@ def greenExpires(eventList, YELLOW, time, debug):
     # TODO: Add code in here for the cars?
     autosStop = (time, 'stopAutos')
     eventList.put(autosStop)
-    print "Event added: stopAutos at {}".format(time)
+    if debug:
+        print "Event added: stopAutos at {}".format(time)
     return eventList
 
 
@@ -234,7 +235,6 @@ def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
           
         autosWaiting.append(auto)
       
-      print
     return eventList, autosWaiting, autosInSystem
     
 def startWalk(time, pedsWaiting, eventList, debug):
