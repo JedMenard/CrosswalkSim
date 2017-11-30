@@ -70,19 +70,22 @@ def main(N, randomAuto, randomPed, randomButtons):
     eventCounter = 0;
 
     # Define initial event times
-    nextPedTime = time + uniformToExponential(getTime(pedTimes), rp)
+    firstPedTime = time + uniformToExponential(getTime(pedTimes), rp)
+    secondPedTime = time + uniformToExponential(getTime(pedTimes), rp) 
     nextAutoTime = time + uniformToExponential(getTime(autoTimes), ra)
     nextLightChange = time
     nextButtonPress = time
 
     # Define initial events
-    nextPed = (nextPedTime, 'pedSpawn')
+    firstPed = (firstPedTime, 'pedSpawn')
+    secondPed = (secondPedTime, 'pedSpawn')
     nextAuto = (nextAutoTime, 'autoSpawn')
     nextLight = (nextLightChange, 'greenExpires')
     nextButton = (nextButtonPress, 'buttonPress')
 
     # Enqueue initial events
-    eventList.put(nextPed)
+    eventList.put(firstPed)
+    eventList.put(secondPed)
     eventList.put(nextAuto)
     eventList.put(nextLight)
 
@@ -126,7 +129,9 @@ def main(N, randomAuto, randomPed, randomButtons):
             break
 
     pedMean, pedVar = welfords(pedDelays)
-    autoMean, autoVar = welfords(autoDelays)
+    # autoMean, autoVar = welfords(autoDelays)
+    autoMean = 0
+    autoVar = 0
 
     # Output for grader script
     print "OUTPUT {} {} {}".format(autoMean, autoVar, pedMean)
