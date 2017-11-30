@@ -148,28 +148,59 @@ def autoSpawn(eventList, autosInSystem, time, speed, distance, autoTimes, ra, un
     return autosInSystem, autoTimes
 
 
-def autoArrival(time, eventList, auto, autosInSystem, autosWaiting, light, lastLightChange, debug):
-#    # An automobile arives at the intersection
-#    
-#    # Remove the arriving auto from the system
-#    index = autosInSystem.index(auto)
-#    auto = autosInSystem.pop(index)
-#    print auto
-#    
-#    if light == 'yellow':
-#      crosstime = (w + L)/auto[1]
-#      print "Pedestrian speed: {}".format(ped[1])
-#      print "Cross time: {}".format(crosstime)
-#      print "Remaining time on crosswalk: {}".format(18 - time + lastLightChange) 
-#      ####
+def autoArrival(time, eventList, auto, distance, autosInSystem, autosWaiting, light, lastLightChange, debug):
+    # An automobile arives at the intersection
+    
+    # Remove the arriving auto from the system
+    index = autosInSystem.index(auto)
+    auto = autosInSystem.pop(index)
+    if debug:
+        print auto
+    
+    if light == 'yellow':
+        t = 24 / auto[1]                      # Time to cross
+        tr = 8 - (time - lastLightChange)     # Time remaining on light
+
+        if debug:
+            print "Time remaining: {0:.2f}".format(tr)
+            print "Time to cross: {0:.2f}".format(t)
+
+        if tr > t:                            # If there's enough time to cross
+            exitTime = time + distance/auto[1];      # Exit the system
+            exitEvent = (exitTime, 'autoExit', auto)
+            eventList.put(exitEvent)
+
+            if debug:
+                print "Event added: autoExit at time {}".format(exitTime)
+
+        else:
+            autosWaiting.append(auto)         # Just assume they knew when to break
+
+    elif light == 'red':
+        autosWaiting.append(auto)         # Just assume they knew when to break
+
+    else:
+        exitTime = time + distance/auto[1];
+        exitEvent = (exitTime, 'autoExit', auto)
+        eventList.put(exitEvent)
+        if debug:
+            print "Event added: autoExit at time {}".format(exitTime)
 
     return autosInSystem, autosWaiting, eventList
 
 def autoExit(time, autoDelays, auto, debug):
     # An automobile exits the system
     expectedTime = (330*7 + 46*6)/auto[1]        # Calculate their optimal time to get through the system
+    actualTime = time - auto[0]
+    delay = actualTime - expectedTime
     autoDelays.append(delay)                     # Add delay to list
-    return
+    if debug:
+        print "Auto spawn time: {}".format(auto[0])
+        print "Auto speed: {}".format(auto[1])
+        print "Expected time: {}".format(expectedTime)
+        print "Actual time: {}".format(actualTime)
+        
+    return autoDelays
 
 def redExpires(eventList, GREEN, time, debug):
     # Light changes from red to green
@@ -186,6 +217,11 @@ def redExpires(eventList, GREEN, time, debug):
     eventList.put(walkEnd)
     if debug:
         print "Event added: endWalk at {}".format(time)
+
+    startAutos = (time, 'startAutos')
+    eventList.put(startAutos)
+    if debug:
+        print "Event added: startAutos at {}".format(time)
     return eventList
 
 def yellowExpires(eventList, RED, time, debug):
@@ -209,48 +245,33 @@ def greenExpires(eventList, YELLOW, time, debug):
     # Create and enqueue the new event
     nextYellow = (time+YELLOW, 'yellowExpires')
     eventList.put(nextYellow)
-
     if debug:
         print "Event added: yellowExpires at {}".format(time+YELLOW)
 
     # TODO: Add code in here for the cars?
-    autosStop = (time, 'stopAutos')
-    eventList.put(autosStop)
-    if debug:
-        print "Event added: stopAutos at {}".format(time)
+    #autosStop = (time, 'stopAutos')
+    #eventList.put(autosStop)
+    #if debug:
+    #    print "Event added: stopAutos at {}".format(time)
     return eventList
 
 
-def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
+def startAutos(time, autosWaiting, eventList, distance, debug):
     # Stops autos in system if necessary when Yellow light is triggered.
-    for auto in autosInSystem:
-      crossTime = auto[0] + (33 + distance) / auto[1]     # Auto leaves the crosswalk 
-      arrivalTime = auto[0] + distance/auto[1]            # Auto arrives before the transition out of red
-      
-      if debug:
-        print "Auto speed: {}".format(auto[1])
-        print "Cross time: {}".format(crossTime)
-        print "Arrival time: {}".format(arrivalTime)
-      
-      if (arrivalTime < time + 26) and (crossTime > time + 8):  
-        if debug:
-          print "Auto is delayed."
-          
-        b = distance - auto[1] ** 2 / 20      # Braking distance
-        t = auto[1] / 10                      # Braking time
+    for auto in autosWaiting:
+
+        accDistance = auto[1]**2/20
+        accTime = auto[1]/10
+
+        travelDistance = distance - accDistance
+        travelTime = travelDistance/auto[1]
         
-        ###
-        
-        # Find time at which the delayed cars reach the crosswalk
-        # Add remaining time of walk signal time to delay
-        # Add time for acceleration and deceleration t to delay
-        
-        ###
-        
-        autosWaiting.append(auto)
+        exitTime = time + accTime + travelTime;      # Exit the system
+        exitEvent = (exitTime, 'autoExit', auto)
+        eventList.put(exitEvent)
       
       
-    return eventList, autosWaiting, autosInSystem
+    return eventList, []
     
 def startWalk(time, pedsWaiting, eventList, debug):
     # Crosswalk sign turns on, peds start to cross

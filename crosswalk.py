@@ -29,7 +29,7 @@ pedsExited = 0
 # If you want detailed outputs to the screen, set this to true
 # Note that it pauses after each event, so leave false when running grader script
 # Press enter to continue through pause
-debug = True
+debug = False
 
 
 # Defining some global constants
@@ -72,21 +72,24 @@ def main(N, randomAuto, randomPed, randomButtons):
     # Define initial event times
     firstPedTime = time + uniformToExponential(getTime(pedTimes), rp)
     secondPedTime = time + uniformToExponential(getTime(pedTimes), rp) 
-    nextAutoTime = time + uniformToExponential(getTime(autoTimes), ra)
+    firstAutoTime = time + uniformToExponential(getTime(autoTimes), ra)
+    secondAutoTime = time + uniformToExponential(getTime(autoTimes), ra)
     nextLightChange = time
     nextButtonPress = time
 
     # Define initial events
     firstPed = (firstPedTime, 'pedSpawn')
     secondPed = (secondPedTime, 'pedSpawn')
-    nextAuto = (nextAutoTime, 'autoSpawn')
+    firstAuto = (firstAutoTime, 'autoSpawn')
+    secondAuto = (secondAutoTime, 'autoSpawn')
     nextLight = (nextLightChange, 'greenExpires')
     nextButton = (nextButtonPress, 'buttonPress')
 
     # Enqueue initial events
     eventList.put(firstPed)
     eventList.put(secondPed)
-    eventList.put(nextAuto)
+    eventList.put(firstAuto)
+    eventList.put(secondAuto)
     eventList.put(nextLight)
 
     # Continue unti we've spawned the specified number of autos and peds
@@ -129,9 +132,9 @@ def main(N, randomAuto, randomPed, randomButtons):
             break
 
     pedMean, pedVar = welfords(pedDelays)
-    # autoMean, autoVar = welfords(autoDelays)
-    autoMean = 0
-    autoVar = 0
+    autoMean, autoVar = welfords(autoDelays)
+    #autoMean = 0
+    #autoVar = 0
 
     # Output for grader script
     print "OUTPUT {} {} {}".format(autoMean, autoVar, pedMean)
@@ -222,10 +225,12 @@ def processEvent(event, N):
     elif (e == 'autoArrival'):
         auto = event[2]
         autosInSystem, autosWaiting, eventList = autoArrival(time, eventList, auto, \
-                      autosInSystem, autosWaiting, walkLight, lastLightChange, debug)
+                      B*3.5 + 3*S + 12, autosInSystem, autosWaiting, driveLight,\
+                      lastLightChange, debug)
         
     elif (e == 'autoExit'):
-        autoExit()
+        auto = event[2]
+        autoExit(time, autoDelays, auto, debug)
         
     elif (e == 'redExpires'):
         lastLightChange = time
@@ -243,9 +248,9 @@ def processEvent(event, N):
             driveLight = 'yellow'
             eventList = greenExpires(eventList, YELLOW, time, debug)
             
-    elif (e == 'stopAutos'):
-        eventList, autosWaiting, autosInSystem = stopAutos(time, autosWaiting, autosInSystem, \
-                      eventList, B*3.5 + S*3 - 12, debug)
+    elif (e == 'startAutos'):
+        eventList, autosWaiting = startAutos(time, autosWaiting, \
+                      eventList, B*3.5 + S*3 + 12, debug)
         
     elif (e == 'startWalk'):
         walkLight = 'green'
