@@ -222,8 +222,7 @@ def greenExpires(eventList, YELLOW, time, debug):
 
 
 def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
-
-    
+    # Stops autos in system if necessary when Yellow light is triggered.
     for auto in autosInSystem:
       crossTime = auto[0] + (33 + distance) / auto[1]     # Auto leaves the crosswalk 
       arrivalTime = auto[0] + distance/auto[1]            # Auto arrives before the transition out of red
@@ -233,13 +232,20 @@ def stopAutos(time, autosWaiting, autosInSystem, eventList, distance, debug):
         print "Cross time: {}".format(crossTime)
         print "Arrival time: {}".format(arrivalTime)
       
-      if (arrivalTime < time + 26) and (crossTime > time + 8):
+      if (arrivalTime < time + 26) and (crossTime > time + 8):  
         if debug:
           print "Auto is delayed."
           
-        b = distance - auto[1] ** 2 / 20     # Braking distance
-        t = auto[1] / 10                    # Braking time
+        b = distance - auto[1] ** 2 / 20      # Braking distance
+        t = auto[1] / 10                      # Braking time
         
+        ###
+        
+        # Find time at which the delayed cars reach the crosswalk
+        # Add remaining time of walk signal time to delay
+        # Add time for acceleration and deceleration t to delay
+        
+        ###
         
         autosWaiting.append(auto)
       
