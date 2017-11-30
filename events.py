@@ -158,7 +158,7 @@ def autoArrival(time, eventList, auto, distance, autosInSystem, autosWaiting, li
         print auto
     
     if light == 'yellow':
-        t = 24 / auto[1]                      # Time to cross
+        t = 33 / auto[1]                      # Time to cross
         tr = 8 - (time - lastLightChange)     # Time remaining on light
 
         if debug:
@@ -269,6 +269,9 @@ def startAutos(time, autosWaiting, eventList, distance, debug):
         exitTime = time + accTime + travelTime;      # Exit the system
         exitEvent = (exitTime, 'autoExit', auto)
         eventList.put(exitEvent)
+
+        if debug:
+            print "Event added: autoExit at {}".format(exitTime)
       
       
     return eventList, []
